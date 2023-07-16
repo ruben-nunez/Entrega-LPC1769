@@ -13,17 +13,15 @@ int main() {
     Inicializar_Led_LPCXpresso1769();
     Inicializar_Boton_LPCXpresso1769();
 
-    // Máquina de Estados para el LED
     Frequency currentFreq = FREQ_100MS;
-    uint32_t ledTimer = 0;
+    uint32_t buttonState = 0;
 
     while (1) {
-        // Máquina de Estados para el botón
-        if (Leer_Estado_Boton_LPCXpresso1769() == 0) {
-            // Esperar a que se suelte el botón
-            while (Leer_Estado_Boton_LPCXpresso1769() == 0);
+        // Leer el estado del botón
+        uint32_t currentButtonState = Leer_Estado_Boton_LPCXpresso1769();
 
-            // Cambiar la frecuencia de parpadeo del LED
+        // Cambiar la frecuencia de parpadeo del LED al detectar un flanco de bajada en el botón
+        if (currentButtonState == 0 && buttonState == 1) {
             switch (currentFreq) {
                 case FREQ_100MS:
                     currentFreq = FREQ_300MS;
@@ -42,43 +40,34 @@ int main() {
             }
         }
 
-        // Máquina de Estados para el LED
+        // Actualizar el estado del botón
+        buttonState = currentButtonState;
+
+        // Cambiar el estado del LED según la frecuencia actual
         switch (currentFreq) {
             case FREQ_100MS:
-                if (ledTimer >= 10) {
-                    Invertir_Led_LPCXpresso1769();
-                    ledTimer = 0;
-                }
+                Encender_Led_LPCXpresso1769();
                 break;
             case FREQ_300MS:
-                if (ledTimer >= 30) {
-                    Invertir_Led_LPCXpresso1769();
-                    ledTimer = 0;
+                if (buttonState == 0) {
+                    Encender_Led_LPCXpresso1769();
+                } else {
+                    Apagar_Led_LPCXpresso1769();
                 }
                 break;
             case FREQ_500MS:
-                if (ledTimer >= 50) {
-                    Invertir_Led_LPCXpresso1769();
-                    ledTimer = 0;
+                if (buttonState == 0) {
+                    Apagar_Led_LPCXpresso1769();
+                } else {
+                    Encender_Led_LPCXpresso1769();
                 }
                 break;
             case FREQ_1S:
-                if (ledTimer >= 100) {
-                    Invertir_Led_LPCXpresso1769();
-                    ledTimer = 0;
-                }
+                Apagar_Led_LPCXpresso1769();
                 break;
             default:
                 break;
         }
-
-        // Retardo de 10 ms
-        for (int i = 0; i < 10000; i++) {
-            asm("nop");
-        }
-        
-        // Incrementar el temporizador del LED
-        ledTimer++;
     }
 
     return 0;
